@@ -1033,7 +1033,7 @@ function initDepositSystem() {
   const recordsTableBody = document.getElementById('recordsTableBody');
   const recordsSearch = document.getElementById('recordsSearch');
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
   let selectedFile = null;
   let allDocuments = []; // Local cache of fetched DB docs
 
