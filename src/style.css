@@ -2780,3 +2780,424 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--accent-gold);
   background-color: rgba(207, 160, 93, 0.05);
 }
+
+/* ==========================================================================
+   DOCUMENT DEPOSIT & UPLOAD
+   ========================================================================== */
+
+.deposit-section {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.deposit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  margin-top: 50px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .deposit-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+.deposit-card {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-gold);
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .deposit-card {
+    padding: 25px;
+  }
+}
+
+.deposit-card::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px dashed rgba(207, 160, 93, 0.12);
+  pointer-events: none;
+}
+
+.deposit-card-title {
+  font-family: var(--font-serif-header);
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 25px;
+  border-bottom: 1px dashed var(--border-gold);
+  padding-bottom: 10px;
+}
+
+.deposit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  z-index: 5;
+}
+
+/* Dropzone Area */
+.upload-dropzone {
+  border: 2px dashed rgba(207, 160, 93, 0.3);
+  background-color: rgba(10, 9, 8, 0.4);
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  position: relative;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-dropzone:hover, .upload-dropzone.dragover {
+  border-color: var(--accent-gold);
+  background-color: rgba(207, 160, 93, 0.05);
+  box-shadow: inset 0 0 15px rgba(207, 160, 93, 0.05);
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropzone-icon {
+  font-size: 2.2rem;
+  color: var(--accent-gold);
+  margin-bottom: 5px;
+}
+
+.dropzone-text {
+  font-family: var(--font-serif-narrative);
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+}
+
+.gold-link {
+  color: var(--accent-gold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dropzone-hint {
+  font-family: var(--font-sans-ui);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* Selected File Info Card */
+.selected-file-info {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 15px;
+  background-color: rgba(10, 9, 8, 0.6);
+  border: 1px solid var(--border-gold);
+  padding: 15px 20px;
+  text-align: left;
+}
+
+.file-icon {
+  font-size: 2rem;
+}
+
+.file-meta {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.file-name {
+  font-family: var(--font-sans-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.file-size {
+  font-family: var(--font-sans-ui);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  transition: var(--transition-fast);
+}
+
+.btn-remove-file:hover {
+  color: #a83c2e;
+}
+
+/* Upload Progress */
+.upload-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: rgba(10, 9, 8, 0.4);
+  padding: 15px 20px;
+  border: 1px solid rgba(207, 160, 93, 0.1);
+}
+
+.progress-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-status {
+  font-family: var(--font-sans-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.progress-percent {
+  font-family: var(--font-sans-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-bronze), var(--accent-gold));
+  transition: width 0.3s ease;
+}
+
+/* Right Panel: Vault Archives (MongoDB) */
+.records-card {
+  flex-grow: 1;
+}
+
+.records-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  border-bottom: 1px dashed var(--border-gold);
+  padding-bottom: 10px;
+}
+
+.records-header .deposit-card-title {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.records-search-wrapper {
+  max-width: 250px;
+  width: 100%;
+}
+
+.records-search-wrapper .search-input {
+  font-size: 0.85rem;
+  padding: 10px 15px;
+}
+
+.records-table-container {
+  width: 100%;
+  overflow-x: auto;
+  flex-grow: 1;
+  max-height: 420px;
+}
+
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.records-table th {
+  font-family: var(--font-sans-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent-bronze);
+  letter-spacing: 0.1em;
+  padding: 15px 12px;
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.records-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(207, 160, 93, 0.08);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.records-table tbody tr {
+  transition: var(--transition-fast);
+}
+
+.records-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* File Badge Details */
+.record-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 260px;
+}
+
+.record-title-link {
+  font-family: var(--font-serif-header);
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.record-title-link:hover {
+  color: var(--accent-gold);
+}
+
+.record-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Badges styling */
+.badge-category {
+  font-family: var(--font-sans-ui);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.badge-historical {
+  background-color: rgba(207, 160, 93, 0.08);
+  border: 1px solid rgba(207, 160, 93, 0.2);
+  color: var(--accent-gold);
+}
+
+.badge-judicial {
+  background-color: rgba(166, 124, 82, 0.08);
+  border: 1px solid rgba(166, 124, 82, 0.2);
+  color: var(--accent-bronze);
+}
+
+.badge-lineage {
+  background-color: rgba(77, 51, 31, 0.2);
+  border: 1px solid rgba(77, 51, 31, 0.4);
+  color: var(--text-primary);
+}
+
+.badge-other {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.record-size {
+  font-family: var(--font-sans-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Action button items in list */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-record-action {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-gold);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.btn-record-action:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.btn-record-action.btn-delete:hover {
+  border-color: #a83c2e;
+  color: #a83c2e;
+}
+
+/* Empty/Loading States */
+.table-empty-state {
+  text-align: center;
+  padding: 60px 0 !important;
+  color: var(--text-muted);
+}
+
+.table-empty-state .empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 15px;
+  color: var(--border-gold-focus);
+}
+
+.table-empty-state p {
+  font-family: var(--font-serif-narrative);
+  font-size: 1.1rem;
+  font-style: italic;
+}
+

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLineageRegister();
   initConsultationForm();
   initCurtainSystem();
+  initDepositSystem();
 });
 
 /* ==========================================================================
@@ -41,7 +42,7 @@ function initNavigation() {
     mobileTrigger.addEventListener('click', () => {
       const isActive = mobileNav.classList.toggle('active');
       mobileTrigger.classList.toggle('active');
-      
+
       // Transform hamburger into cross
       const lines = mobileTrigger.querySelectorAll('.hamburger-line');
       if (isActive) {
@@ -78,7 +79,7 @@ function initMigrationTimelineMap() {
   const timelineColumn = document.querySelector('.timeline-column');
   const timelineItems = document.querySelectorAll('.timeline-item');
   const mapNodes = document.querySelectorAll('.map-node');
-  
+
   // Coordinate panel elements
   const mapCoordVal = document.getElementById('mapCoordVal');
   const mapLeaderVal = document.getElementById('mapLeaderVal');
@@ -95,7 +96,7 @@ function initMigrationTimelineMap() {
   } catch (e) {
     pathLength = 400; // Fallback
   }
-  
+
   activeRoute.style.strokeDasharray = pathLength;
   activeRoute.style.strokeDashoffset = pathLength;
 
@@ -173,13 +174,13 @@ function initMigrationTimelineMap() {
         cartographyPanel.style.opacity = '0.3';
         cartographyPanel.style.transform = 'scale(0.99)';
         cartographyPanel.style.transition = 'all 0.3s ease';
-        
+
         setTimeout(() => {
           mapCoordVal.textContent = nodeData.coord;
           mapLeaderVal.textContent = nodeData.leader;
           mapCargoVal.textContent = nodeData.cargo;
           mapLogText.textContent = nodeData.log;
-          
+
           cartographyPanel.style.opacity = '1';
           cartographyPanel.style.transform = 'scale(1)';
         }, 150);
@@ -385,12 +386,15 @@ function initArchiveSystem() {
     const activeTab = document.querySelector('.filter-tab.active');
     const activeFilter = activeTab ? activeTab.getAttribute('data-filter') : 'all';
 
-    archiveCards.forEach(card => {
+    // Dynamically query all archive cards (including newly loaded ones from MongoDB)
+    const currentCards = document.querySelectorAll('.archive-card');
+
+    currentCards.forEach(card => {
       const category = card.getAttribute('data-category');
       const tags = card.getAttribute('data-tags').toLowerCase();
       const title = card.querySelector('.doc-title').textContent.toLowerCase();
       const summary = card.querySelector('.doc-summary').textContent.toLowerCase();
-      
+
       const matchesSearch = tags.includes(searchQuery) || title.includes(searchQuery) || summary.includes(searchQuery);
       const matchesFilter = activeFilter === 'all' || category === activeFilter;
 
@@ -439,12 +443,12 @@ function initArchiveSystem() {
         modalDocTitle.textContent = docData.title;
         modalDocCategory.textContent = docData.category;
         modalDocContent.innerHTML = docData.content;
-        
+
         // Dynamically load circular stamp details based on category
         const stampElement = document.getElementById('modalStampSeal');
         if (stampElement) {
-          stampElement.textContent = docData.category === 'Historical Treaty' ? '⚜ REPOSITORY' : 
-                                     docData.category === 'Judicial Petition' ? '⚖ WA COURT' : '🛡 REGISTERED';
+          stampElement.textContent = docData.category === 'Historical Treaty' ? '⚜ REPOSITORY' :
+            docData.category === 'Judicial Petition' ? '⚖ WA COURT' : '🛡 REGISTERED';
           // Clean class list and re-apply styling classes
           stampElement.className = 'modal-stamp-seal';
           if (docData.category === 'Historical Treaty') stampElement.classList.add('seal-historical');
@@ -458,7 +462,7 @@ function initArchiveSystem() {
         // Open modal with beautiful fade
         modal.classList.add('active');
         document.body.style.overflow = 'hidden'; // Lock background scroll
-        
+
         // Focus trap for accessibility
         modalClose.focus();
       }
@@ -560,7 +564,7 @@ function initLineageRegister() {
     if (audioCtx) return;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
-    
+
     audioCtx = new AudioContext();
 
     // Create a buffer populated with white noise
@@ -615,7 +619,7 @@ function initLineageRegister() {
   // Draw smooth modular analogue waveforms on canvas
   function drawWaveform() {
     if (!canvas || !canvasCtx) return;
-    
+
     const width = canvas.width;
     const height = canvas.height;
     canvasCtx.clearRect(0, 0, width, height);
@@ -624,7 +628,7 @@ function initLineageRegister() {
     canvasCtx.lineWidth = 1.25;
 
     const centerY = height / 2;
-    
+
     if (!isPlaying) {
       // Draw quiet baseline with tiny static micro-jitters
       canvasCtx.moveTo(0, centerY);
@@ -644,11 +648,11 @@ function initLineageRegister() {
       const sine1 = Math.sin(x * 0.05 + time) * 6;
       const sine2 = Math.cos(x * 0.12 - time * 0.4) * 3;
       const noise = (Math.random() - 0.5) * 2;
-      
+
       // Envelope smoothly pinches waveform at the left & right borders
       const envelope = Math.sin((x / width) * Math.PI);
       const y = centerY + (sine1 + sine2 + noise) * envelope;
-      
+
       canvasCtx.lineTo(x, y);
     }
     canvasCtx.stroke();
@@ -682,13 +686,13 @@ function initLineageRegister() {
     // Start timer incrementer
     playInterval = setInterval(() => {
       playSeconds++;
-      
+
       // Format MM:SS
       const minutes = Math.floor(playSeconds / 60);
       const seconds = playSeconds % 60;
       const formatMin = minutes.toString().padStart(2, '0');
       const formatSec = seconds.toString().padStart(2, '0');
-      
+
       if (tapeTimestamp) tapeTimestamp.textContent = `${formatMin}:${formatSec}`;
 
       // Max tape length mock reset (4 min tape length)
@@ -749,7 +753,7 @@ function initLineageRegister() {
     tapeHissBtn.addEventListener('click', () => {
       hissEnabled = !hissEnabled;
       tapeHissBtn.classList.toggle('active');
-      
+
       if (hissEnabled) {
         if (isPlaying) {
           if (!audioCtx) createTapeHissSynth();
@@ -790,7 +794,7 @@ function initLineageRegister() {
       const annotationData = GATE_ANNOTATIONS[selectedGate];
       if (annotationData && annotatorName) {
         const sidebarContent = document.getElementById('eldersSidebarContent');
-        
+
         // Quick fade-out/fade-in animation
         sidebarContent.style.opacity = '0';
         sidebarContent.style.transform = 'translateY(10px)';
@@ -801,10 +805,10 @@ function initLineageRegister() {
           annotatorTitle.textContent = annotationData.title;
           annotationQuote.textContent = annotationData.quote;
           annotationDate.textContent = annotationData.date;
-          
+
           sidebarContent.style.opacity = '1';
           sidebarContent.style.transform = 'translateY(0)';
-          
+
           // Re-draw waveform baseline
           drawWaveform();
         }, 400);
@@ -818,18 +822,18 @@ function initLineageRegister() {
    ========================================================================== */
 function initConsultationForm() {
   const form = document.getElementById('consultationForm');
-  
+
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      
+
       const researcherName = document.getElementById('researcherName').value;
       const institution = document.getElementById('institution').value;
 
       // Create a gorgeous institutional success message overlay
       const successOverlay = document.createElement('div');
       successOverlay.className = 'form-success-overlay';
-      
+
       // Inline styles for high-fidelity luxury institutional confirmation card
       successOverlay.innerHTML = `
         <div class="success-card">
@@ -845,7 +849,7 @@ function initConsultationForm() {
           <button class="btn-success-close">Acknowledge Customary Accord</button>
         </div>
       `;
-      
+
       // Dynamic Styles for success overlay
       Object.assign(successOverlay.style, {
         position: 'fixed',
@@ -1003,3 +1007,554 @@ function initCurtainSystem() {
     });
   }
 }
+
+/* ==========================================================================
+   6. PALACE DEPOSIT SYSTEM (MONGODB & CLOUDINARY INTEGRATION)
+   ========================================================================== */
+function initDepositSystem() {
+  const form = document.getElementById('documentUploadForm');
+  if (!form) return;
+
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('uploadDropzone');
+  const dropzoneContent = dropzone.querySelector('.dropzone-content');
+  const selectedFileInfo = document.getElementById('selectedFileInfo');
+  const selectedFileName = document.getElementById('selectedFileName');
+  const selectedFileSize = document.getElementById('selectedFileSize');
+  const selectedFileIcon = document.getElementById('selectedFileIcon');
+  const btnRemoveFile = document.getElementById('btnRemoveFile');
+  const btnSubmitUpload = document.getElementById('btnSubmitUpload');
+
+  const progressWrapper = document.getElementById('uploadProgressWrapper');
+  const progressPercent = document.getElementById('uploadProgressPercent');
+  const progressStatus = document.getElementById('uploadProgressStatus');
+  const progressBarFill = document.getElementById('uploadProgressBarFill');
+
+  const recordsTableBody = document.getElementById('recordsTableBody');
+  const recordsSearch = document.getElementById('recordsSearch');
+
+  const API_BASE = 'http://localhost:5000/api';
+  let selectedFile = null;
+  let allDocuments = []; // Local cache of fetched DB docs
+
+  // Select Vault Preview Modal elements once at startup (prevents duplicate listeners)
+  const vaultPreviewModal = document.getElementById('vaultPreviewModal');
+  const vaultModalClose = document.getElementById('vaultModalClose');
+  const vaultModalOverlay = document.getElementById('vaultModalOverlay');
+  const vaultDocFrame = document.getElementById('vaultDocFrame');
+
+  // Close preview modal logic
+  function closeVaultModal() {
+    if (vaultPreviewModal) {
+      vaultPreviewModal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+      if (vaultDocFrame) vaultDocFrame.setAttribute('src', '');
+    }
+  }
+
+  if (vaultModalClose) vaultModalClose.addEventListener('click', closeVaultModal);
+  if (vaultModalOverlay) vaultModalOverlay.addEventListener('click', closeVaultModal);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && vaultPreviewModal && vaultPreviewModal.classList.contains('active')) {
+      closeVaultModal();
+    }
+  });
+
+  // Utility: Format File Size
+  function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  }
+
+  // Utility: Get File Icon based on format
+  function getFileIcon(format) {
+    switch (format.toLowerCase()) {
+      case 'pdf': return '📕';
+      case 'docx':
+      case 'doc': return '📘';
+      case 'txt': return '📙';
+      default: return '📜';
+    }
+  }
+
+  // Trigger file selection clicking dropzone
+  dropzone.addEventListener('click', (e) => {
+    // Avoid double trigger when clicking remove button
+    if (e.target.closest('#btnRemoveFile')) return;
+    fileInput.click();
+  });
+
+  // Drag & Drop event handlers
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length) {
+      handleFileSelect(files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+
+  // Process selected file
+  function handleFileSelect(file) {
+    // Validate File size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Vault Restriction: Deposited file size exceeds 10MB limit.');
+      return;
+    }
+
+    selectedFile = file;
+    const format = file.name.split('.').pop().toLowerCase();
+
+    // UI Updates
+    selectedFileName.textContent = file.name;
+    selectedFileSize.textContent = formatBytes(file.size);
+    selectedFileIcon.textContent = getFileIcon(format);
+
+    dropzoneContent.style.display = 'none';
+    selectedFileInfo.style.display = 'flex';
+    btnSubmitUpload.disabled = false;
+  }
+
+  // Clear Selected File
+  btnRemoveFile.addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetFileSelection();
+  });
+
+  function resetFileSelection() {
+    selectedFile = null;
+    fileInput.value = '';
+    dropzoneContent.style.display = 'flex';
+    selectedFileInfo.style.display = 'none';
+    btnSubmitUpload.disabled = true;
+  }
+
+  // Fetch documents from MongoDB
+  async function fetchDocuments() {
+    try {
+      const response = await fetch(`${API_BASE}/documents`);
+      if (!response.ok) throw new Error('API fetch response failed');
+      allDocuments = await response.json();
+      renderDocuments(allDocuments);
+      renderLibraryCards(allDocuments);
+    } catch (error) {
+      console.error('Error fetching vault documents:', error);
+      recordsTableBody.innerHTML = `
+        <tr class="empty-state-row">
+          <td colspan="4" class="table-empty-state">
+            <span class="empty-icon">⚠️</span>
+            <p>Vault Connection Suspended. Start the backend database server.</p>
+          </td>
+        </tr>
+      `;
+    }
+  }  // Utility: Force download via Cloudinary attachment flag
+  function getDownloadUrl(url, title, format) {
+    if (!url || url.startsWith('#mock-url') || url === '#') {
+      return '#';
+    }
+    if (url.includes('res.cloudinary.com')) {
+      let downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+      // Ensure the URL path ends with the correct format extension so the browser downloads with correct type
+      if (format && !downloadUrl.toLowerCase().endsWith('.' + format.toLowerCase())) {
+        // Append format extension to raw Cloudinary URL
+        downloadUrl = downloadUrl + '.' + format.toLowerCase();
+      }
+      return downloadUrl;
+    }
+    return url;
+  }
+
+  // Render documents to table
+  function renderDocuments(docs) {
+    if (!docs.length) {
+      recordsTableBody.innerHTML = `
+        <tr class="empty-state-row">
+          <td colspan="4" class="table-empty-state">
+            <span class="empty-icon">📂</span>
+            <p>No documents deposited in local MongoDB instance.</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    recordsTableBody.innerHTML = docs.map(doc => {
+      const icon = getFileIcon(doc.format);
+      const sizeStr = formatBytes(doc.size);
+      const downloadUrl = getDownloadUrl(doc.url, doc.title, doc.format);
+
+      return `
+        <tr>
+          <td>
+            <div class="record-title-container">
+              <span class="record-title-link" title="${doc.title}">
+                ${icon} ${doc.title}
+              </span>
+              <span class="record-desc">${doc.description || 'No description provided.'}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge-category badge-${doc.category}">${doc.category}</span>
+          </td>
+          <td>
+            <span class="record-size">${sizeStr}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-record-action btn-preview-vault" data-url="${doc.url}" data-title="${doc.title}" data-category="${doc.category}" data-size="${sizeStr}" data-format="${doc.format}" title="Preview Document">
+                👁️
+              </button>
+              <a href="${downloadUrl}" class="btn-record-action btn-download-vault" download="${doc.title}.${doc.format}" title="Download Document">
+                📥
+              </a>
+              <button class="btn-record-action btn-delete" data-id="${doc._id}" title="Delete Record">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Wire up preview button actions
+    const previewVaultButtons = recordsTableBody.querySelectorAll('.btn-preview-vault');
+    const vaultPreviewModal = document.getElementById('vaultPreviewModal');
+    const vaultDocFrame = document.getElementById('vaultDocFrame');
+    const vaultDocNoPreview = document.getElementById('vaultDocNoPreview');
+    const vaultDocFallbackDownload = document.getElementById('vaultDocFallbackDownload');
+    const vaultModalDocTitle = document.getElementById('vaultModalDocTitle');
+    const vaultModalDocCategory = document.getElementById('vaultModalDocCategory');
+    const vaultModalDocSize = document.getElementById('vaultModalDocSize');
+    const vaultModalDownloadBtn = document.getElementById('vaultModalDownloadBtn');
+
+    previewVaultButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const fileUrl = btn.getAttribute('data-url');
+        const fileTitle = btn.getAttribute('data-title');
+        const fileCategory = btn.getAttribute('data-category');
+        const fileSize = btn.getAttribute('data-size');
+        const fileFormat = btn.getAttribute('data-format').toLowerCase();
+        const downloadLabel = fileFormat === 'pdf' ? 'Download PDF' :
+          fileFormat === 'docx' ? 'Download Word' :
+            fileFormat === 'doc' ? 'Download Word' :
+              fileFormat === 'txt' ? 'Download TXT' :
+                `Download ${fileFormat.toUpperCase()}`;
+
+        vaultModalDocTitle.textContent = fileTitle;
+        vaultModalDocCategory.textContent = fileCategory;
+        vaultModalDocSize.textContent = `${fileFormat.toUpperCase()} - ${fileSize}`;
+
+        const downloadUrl = getDownloadUrl(fileUrl, fileTitle, fileFormat);
+        vaultModalDownloadBtn.setAttribute('href', downloadUrl);
+        vaultModalDownloadBtn.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        vaultModalDownloadBtn.textContent = downloadLabel;
+        vaultDocFallbackDownload.setAttribute('href', downloadUrl);
+        vaultDocFallbackDownload.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        vaultDocFallbackDownload.textContent = downloadLabel;
+
+        if (fileUrl.startsWith('#mock-url')) {
+          vaultDocFrame.style.display = 'none';
+          vaultDocNoPreview.style.display = 'flex';
+          const mockP = vaultDocNoPreview.querySelector('p');
+          if (mockP) mockP.textContent = 'This is a mock database record. Previewing mock records is not supported. Please configure your Cloudinary credentials for live files.';
+        } else if (fileFormat === 'pdf' || fileFormat === 'txt') {
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          vaultDocFrame.setAttribute('src', fileUrl);
+        } else if (fileFormat === 'docx' || fileFormat === 'doc') {
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
+        } else {
+          vaultDocFrame.style.display = 'none';
+          vaultDocNoPreview.style.display = 'flex';
+          const failP = vaultDocNoPreview.querySelector('p');
+          if (failP) failP.textContent = 'This file format cannot be previewed directly in-browser. Please download the document to view its full content.';
+        }
+
+        vaultPreviewModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+
+
+    // Wire up delete button actions
+    const deleteButtons = recordsTableBody.querySelectorAll('.btn-delete');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const docId = btn.getAttribute('data-id');
+        if (confirm('Are you sure you want to permanently delete this document from Cloudinary and MongoDB?')) {
+          await deleteDocument(docId);
+        }
+      });
+    });
+  }
+  // Delete document
+  async function deleteDocument(id) {
+    try {
+      const response = await fetch(`${API_BASE}/documents/${id}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+      if (result.success) {
+        fetchDocuments();
+      } else {
+        alert('Failed to delete document: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Delete document error:', error);
+      alert('Connection error occurred while deleting document.');
+    }
+  }
+
+  // Submit & Upload document form
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    const title = document.getElementById('docTitle').value;
+    const category = document.getElementById('docCategory').value;
+    const description = document.getElementById('docDescription').value;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('title', title);
+    formData.append('category', category);
+    formData.append('description', description);
+
+    // Show Progress State
+    progressWrapper.style.display = 'block';
+    btnSubmitUpload.disabled = true;
+    btnSubmitUpload.innerText = 'Securing Document...';
+
+    // Using XMLHttpRequest to support upload progress monitoring
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_BASE}/documents/upload`);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        progressPercent.textContent = `${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+
+        if (percent === 100) {
+          progressStatus.textContent = 'Storing metadata in MongoDB...';
+        } else {
+          progressStatus.textContent = 'Uploading to Cloudinary vaults...';
+        }
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const response = JSON.parse(xhr.responseText);
+        progressStatus.textContent = response.message || 'DOCUMENT ARCHIVED SECURELY';
+        progressBarFill.style.backgroundColor = '#2ea84b';
+
+        setTimeout(() => {
+          progressWrapper.style.display = 'none';
+          progressBarFill.style.width = '0%';
+          progressBarFill.style.backgroundColor = '';
+          form.reset();
+          resetFileSelection();
+          btnSubmitUpload.innerText = 'Deposit File to Vaults';
+          fetchDocuments(); // Refresh documents table view
+        }, 2000);
+      } else {
+        let errMsg = 'Vault upload failed.';
+        try {
+          const resp = JSON.parse(xhr.responseText);
+          errMsg = resp.error || errMsg;
+        } catch (_) { }
+        progressStatus.textContent = 'ARCHIVAL SUSPENDED';
+        alert('Archival failed: ' + errMsg);
+        btnSubmitUpload.disabled = false;
+        btnSubmitUpload.innerText = 'Deposit File to Vaults';
+        progressWrapper.style.display = 'none';
+      }
+    };
+
+    xhr.onerror = () => {
+      progressStatus.textContent = 'CONNECTION ERROR';
+      alert('Network error occurred during document deposit.');
+      btnSubmitUpload.disabled = false;
+      btnSubmitUpload.innerText = 'Deposit File to Vaults';
+      progressWrapper.style.display = 'none';
+    };
+
+    xhr.send(formData);
+  });
+
+  // Client-side live search filter
+  recordsSearch.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (!query) {
+      renderDocuments(allDocuments);
+      return;
+    }
+
+    const filtered = allDocuments.filter(doc => {
+      const titleMatch = doc.title.toLowerCase().includes(query);
+      const descMatch = (doc.description || '').toLowerCase().includes(query);
+      const categoryMatch = doc.category.toLowerCase().includes(query);
+      return titleMatch || descMatch || categoryMatch;
+    });
+
+    renderDocuments(filtered);
+  });
+
+  // Dynamic rendering of uploaded documents into the main Heritage Library grid
+  function renderLibraryCards(docs) {
+    const archiveGrid = document.getElementById('archiveGrid');
+    if (!archiveGrid) return;
+
+    if (!docs || !docs.length) {
+      archiveGrid.innerHTML = `
+        <div class="table-empty-state dynamic-empty-state" style="grid-column: 1 / -1; padding: 80px 20px; text-align: center;">
+          <span class="empty-icon" style="font-size: 3.5rem; display: block; margin-bottom: 15px; color: var(--border-gold-focus);">📂</span>
+          <p style="font-family: var(--font-serif-narrative); font-size: 1.25rem; font-style: italic; color: var(--text-muted);">No documents deposited in the Royal Library yet.</p>
+          <p style="font-family: var(--font-sans-ui); font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">Please use the <a href="#deposit" class="gold-link">Manuscript Deposit</a> section below to upload new documents.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Clear the container (removes the placeholder) before adding cards
+    archiveGrid.innerHTML = '';
+
+    docs.forEach(doc => {
+      const isMock = doc.url.startsWith('#mock-url');
+      const sizeStr = formatBytes(doc.size);
+      const downloadUrl = getDownloadUrl(doc.url, doc.title, doc.format);
+      const dateStr = new Date(doc.uploadedAt).toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+
+      // Map categories to matches in filter tabs / labels
+      const categoryLabel = doc.category === 'historical' ? 'Historical Treaty' :
+        doc.category === 'judicial' ? 'Judicial Petition' :
+          doc.category === 'lineage' ? 'Royal Lineage' : 'Other Record';
+
+      // Create the card element
+      const card = document.createElement('div');
+      card.className = `archive-card dynamic-vault-card`;
+      card.setAttribute('data-category', doc.category);
+      card.setAttribute('data-tags', `${doc.title} ${doc.description || ''} vault deposit ${doc.category} ${doc.format}`.toLowerCase());
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="doc-code">VLT-${doc.format.toUpperCase()}</span>
+          <span class="doc-badge badge-${doc.category}">${categoryLabel}</span>
+        </div>
+        <div class="card-stamp-seal seal-${doc.category}">⚜ VAULT DEPOSIT</div>
+        <h3 class="doc-title">${doc.title}</h3>
+        <p class="doc-summary">${doc.description || 'Uploaded manuscript, verified in palace archives.'}</p>
+        <div class="doc-meta">
+          <span><strong class="meta-label-sub">Uploaded:</strong> ${dateStr}</span>
+          <span><strong class="meta-label-sub">Access:</strong> ${doc.format.toUpperCase()} (${sizeStr})</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-preview-vault btn-preview" data-url="${doc.url}" data-title="${doc.title}" data-category="${categoryLabel}" data-size="${sizeStr}" data-format="${doc.format}">Open Preview</button>
+          <a href="${downloadUrl}" class="btn-download" download="${doc.title}.${doc.format}">Download ${doc.format.toUpperCase()}</a>
+        </div>
+      `;
+
+      archiveGrid.appendChild(card);
+    });
+
+    // Wire up the new dynamic card preview actions
+    const previewVaultButtons = archiveGrid.querySelectorAll('.dynamic-vault-card .btn-preview-vault');
+    const vaultPreviewModal = document.getElementById('vaultPreviewModal');
+    const vaultDocFrame = document.getElementById('vaultDocFrame');
+    const vaultDocNoPreview = document.getElementById('vaultDocNoPreview');
+    const vaultDocFallbackDownload = document.getElementById('vaultDocFallbackDownload');
+    const vaultModalDocTitle = document.getElementById('vaultModalDocTitle');
+    const vaultModalDocCategory = document.getElementById('vaultModalDocCategory');
+    const vaultModalDocSize = document.getElementById('vaultModalDocSize');
+    const vaultModalDownloadBtn = document.getElementById('vaultModalDownloadBtn');
+
+    previewVaultButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const fileUrl = btn.getAttribute('data-url');
+        const fileTitle = btn.getAttribute('data-title');
+        const fileCategory = btn.getAttribute('data-category');
+        const fileSize = btn.getAttribute('data-size');
+        const fileFormat = btn.getAttribute('data-format').toLowerCase();
+        const downloadLabel = fileFormat === 'pdf' ? 'Download PDF' :
+          fileFormat === 'docx' ? 'Download Word' :
+            fileFormat === 'doc' ? 'Download Word' :
+              fileFormat === 'txt' ? 'Download TXT' :
+                `Download ${fileFormat.toUpperCase()}`;
+
+        vaultModalDocTitle.textContent = fileTitle;
+        vaultModalDocCategory.textContent = fileCategory;
+        vaultModalDocSize.textContent = `${fileFormat.toUpperCase()} - ${fileSize}`;
+
+        const downloadUrl = getDownloadUrl(fileUrl, fileTitle, fileFormat);
+        vaultModalDownloadBtn.setAttribute('href', downloadUrl);
+        vaultModalDownloadBtn.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        vaultModalDownloadBtn.textContent = downloadLabel;
+        vaultDocFallbackDownload.setAttribute('href', downloadUrl);
+        vaultDocFallbackDownload.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        vaultDocFallbackDownload.textContent = downloadLabel;
+
+
+        if (fileUrl.startsWith('#mock-url')) {
+          vaultDocFrame.style.display = 'none';
+          vaultDocNoPreview.style.display = 'flex';
+          const mockP = vaultDocNoPreview.querySelector('p');
+          if (mockP) mockP.textContent = 'This is a mock database record. Previewing mock records is not supported. Please configure your Cloudinary credentials for live files.';
+        } else if (fileFormat === 'pdf' || fileFormat === 'txt') {
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          vaultDocFrame.setAttribute('src', fileUrl);
+        } else if (fileFormat === 'docx' || fileFormat === 'doc') {
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
+        } else {
+          vaultDocFrame.style.display = 'none';
+          vaultDocNoPreview.style.display = 'flex';
+          const failP = vaultDocNoPreview.querySelector('p');
+          if (failP) failP.textContent = 'This file format cannot be previewed directly in-browser. Please download the document to view its full content.';
+        }
+
+        vaultPreviewModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+  }
+
+  // Initial load
+  fetchDocuments();
+}
+
