@@ -817,6 +817,11 @@
                     <canvas id="waveformCanvas" class="waveform-canvas" width="220" height="40"></canvas>
                     <div class="tape-timestamp" id="tapeTimestamp">00:00</div>
                   </div>
+                  <!-- Interactive Audio Scrubber Seek Bar -->
+                  <div class="tape-scrubber-wrapper">
+                    <input type="range" class="tape-scrubber" id="tapeScrubber" min="0" max="5" value="0" step="0.01" aria-label="Seek audio position" />
+                    <div class="scrubber-track-fill" id="scrubberTrackFill"></div>
+                  </div>
                 </div>
                 <!-- Controls -->
                 <div class="tape-controls">

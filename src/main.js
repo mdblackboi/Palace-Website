@@ -538,6 +538,8 @@ function initLineageRegister() {
   const tapeHissBtn = document.getElementById('tapeHissBtn');
   const tapeStatusText = document.getElementById('tapeStatusText');
   const tapeTimestamp = document.getElementById('tapeTimestamp');
+  const tapeScrubber = document.getElementById('tapeScrubber');
+  const scrubberTrackFill = document.getElementById('scrubberTrackFill');
   const canvas = document.getElementById('waveformCanvas');
   let canvasCtx = null;
   if (canvas) canvasCtx = canvas.getContext('2d');
@@ -548,6 +550,24 @@ function initLineageRegister() {
   let playSeconds = 0;
   let playInterval = null;
   let animationFrameId = null;
+
+  // Update Scrubber Track Fill and Timestamp UI
+  function updateScrubberUI(rulerIndex) {
+    if (!tapeScrubber) return;
+    const maxVal = parseFloat(tapeScrubber.max) || 5;
+    const currentVal = Math.min(maxVal, Math.max(0, rulerIndex));
+    tapeScrubber.value = currentVal;
+    
+    const fillPercent = (currentVal / maxVal) * 100;
+    if (scrubberTrackFill) {
+      scrubberTrackFill.style.width = fillPercent + '%';
+    }
+
+    const formattedSec = Math.floor(currentVal * 60);
+    const minStr = Math.floor(formattedSec / 60).toString().padStart(2, '0');
+    const secStr = (formattedSec % 60).toString().padStart(2, '0');
+    if (tapeTimestamp) tapeTimestamp.textContent = `${minStr}:${secStr}`;
+  }
 
   // Web Audio tape hiss synthesizer state
   let audioCtx = null;
@@ -703,12 +723,153 @@ function initLineageRegister() {
 
     // Run Waveform Canvas loop
     drawWaveform();
+
+    // Start reading rulers sequentially from current activeRulerIndex
+    readRuler(activeRulerIndex);
+  }
+
+  // Active Ruler Tracking
+  let activeRulerIndex = 0;
+
+  // Extract metadata from a ruler card
+  function getRulerData(card) {
+    const rank = card.querySelector('.ruler-rank')?.textContent.trim() || '';
+    const years = card.querySelector('.ruler-years')?.textContent.trim() || '';
+    const name = card.querySelector('.ruler-name')?.textContent.trim() || '';
+    const gate = card.querySelector('.ruler-gate-label')?.textContent.trim() || '';
+    const bio = card.querySelector('.ruler-bio')?.textContent.trim() || '';
+    return { rank, years, name, gate, bio };
+  }
+
+  // Read Out Loud a specific Ruler Card (1 to 6) and advance automatically
+  function readRuler(index) {
+    if (!rulerCards || !rulerCards.length) return;
+    if (index < 0 || index >= rulerCards.length) {
+      resetTape();
+      return;
+    }
+
+    activeRulerIndex = index;
+    const card = rulerCards[index];
+
+    // Highlight active card visually
+    rulerCards.forEach(c => c.classList.remove('active-ruler'));
+    card.classList.add('active-ruler');
+
+    // Update Scrubber Track & Timestamp
+    updateScrubberUI(index);
+
+    const data = getRulerData(card);
+
+    // Update status text on tape deck display
+    if (tapeStatusText) {
+      tapeStatusText.textContent = `RULER ${data.rank} - ${data.name.toUpperCase()}`;
+      tapeStatusText.classList.add('playing');
+    }
+
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    // Construct clear, dignified speech text
+    const speechText = `Ruler number ${parseInt(data.rank, 10)}. ${data.name}. Reigned ${data.years}. ${data.gate}. ${data.bio}`;
+
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    utterance.rate = 0.92;  // Measured elder cadence
+    utterance.pitch = 0.9;  // Deep, warm tone
+
+    // Pre-select a natural English voice if available
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.lang.startsWith('en') && (
+      v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('David') || v.name.includes('Male')
+    ));
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    utterance.onend = () => {
+      if (isPlaying) {
+        if (activeRulerIndex < rulerCards.length - 1) {
+          readRuler(activeRulerIndex + 1); // Automatically advance to the next ruler (1 -> 2 -> 3 -> 4 -> 5 -> 6)!
+        } else {
+          resetTape(); // Finished reading Ruler 6!
+        }
+      }
+    };
+
+    utterance.onerror = () => {
+      pauseTape();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // Make all Ruler Cards (1 to 6) interactive and clickable
+  rulerCards.forEach((card, idx) => {
+    card.addEventListener('click', () => {
+      activeRulerIndex = idx;
+      rulerCards.forEach(c => c.classList.remove('active-ruler'));
+      card.classList.add('active-ruler');
+
+      if (isPlaying) {
+        readRuler(idx);
+      } else {
+        playTape();
+      }
+    });
+  });
+
+  // Interactive Tape Scrubber (Drag / Seek audio back and forward)
+  if (tapeScrubber) {
+    const handleScrubberSeek = (val) => {
+      const targetIndex = Math.min(5, Math.max(0, Math.floor(val)));
+
+      // Update Fill & Timestamp UI immediately while dragging
+      const fillPercent = (val / 5) * 100;
+      if (scrubberTrackFill) scrubberTrackFill.style.width = fillPercent + '%';
+
+      const formattedSec = Math.floor(val * 60);
+      const minStr = Math.floor(formattedSec / 60).toString().padStart(2, '0');
+      const secStr = (formattedSec % 60).toString().padStart(2, '0');
+      if (tapeTimestamp) tapeTimestamp.textContent = `${minStr}:${secStr}`;
+
+      if (targetIndex !== activeRulerIndex) {
+        activeRulerIndex = targetIndex;
+        rulerCards.forEach(c => c.classList.remove('active-ruler'));
+        if (rulerCards[targetIndex]) {
+          rulerCards[targetIndex].classList.add('active-ruler');
+          rulerCards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        if (isPlaying) {
+          readRuler(targetIndex);
+        } else {
+          const data = getRulerData(rulerCards[targetIndex]);
+          if (tapeStatusText) {
+            tapeStatusText.textContent = `SEEK RULER ${data.rank}`;
+          }
+        }
+      }
+    };
+
+    tapeScrubber.addEventListener('input', (e) => {
+      handleScrubberSeek(parseFloat(e.target.value));
+    });
+
+    tapeScrubber.addEventListener('change', (e) => {
+      const val = parseFloat(e.target.value);
+      const targetIndex = Math.min(5, Math.max(0, Math.floor(val)));
+      if (isPlaying) {
+        readRuler(targetIndex);
+      }
+    });
   }
 
   // Pause Playback Loop
   function pauseTape() {
     if (!isPlaying) return;
     isPlaying = false;
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
 
     // UI Updates
     if (leftSpool) leftSpool.classList.remove('playing');
@@ -731,7 +892,13 @@ function initLineageRegister() {
 
   // Completely Stop & Reset Deck (cassette swap)
   function resetTape() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     pauseTape();
+    activeRulerIndex = 0; // Reset index back to Ruler 1
+    rulerCards.forEach(c => c.classList.remove('active-ruler'));
+    updateScrubberUI(0);
     playSeconds = 0;
     if (tapeTimestamp) tapeTimestamp.textContent = '00:00';
     if (tapeStatusText) tapeStatusText.textContent = 'TAPE INDEXED';
