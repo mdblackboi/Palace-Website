@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap Location
-Sitemap: https://paalapalace.org/sitemap.xml
+Sitemap: https://paalapalace.org/sitemap-v4.xml
