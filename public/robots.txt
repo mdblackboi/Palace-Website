@@ -1,0 +1,6 @@
+# Allow all search engines to index the Paala Palace Heritage Repository
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://paalapalace.org/sitemap.xml
