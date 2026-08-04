@@ -1341,16 +1341,63 @@ function initDepositSystem() {
         </tr>
       `;
     }
-  }  // Utility: Force download via Cloudinary attachment flag
+  }  // Helper: Trigger clean cross-origin download via Blob
+  function triggerDirectDownload(url, filename) {
+    if (!url || url === '#' || url.startsWith('#mock-url')) {
+      alert('This is a mock database record. Direct download is only available for live uploaded document files.');
+      return;
+    }
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Download network error');
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(a);
+        }, 150);
+      })
+      .catch(() => {
+        // Direct link fallback if fetch is blocked
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+        }, 150);
+      });
+  }
+
+  // Utility: Force download via Cloudinary attachment flag
   function getDownloadUrl(url, title, format) {
     if (!url || url.startsWith('#mock-url') || url === '#') {
       return '#';
     }
     if (url.includes('res.cloudinary.com')) {
+      // Cloudinary raw resource URLs must NOT include fl_attachment as it causes a 404 error
+      if (url.includes('/raw/upload/')) {
+        let downloadUrl = url;
+        if (format && !downloadUrl.toLowerCase().endsWith('.' + format.toLowerCase())) {
+          downloadUrl = downloadUrl + '.' + format.toLowerCase();
+        }
+        return downloadUrl;
+      }
+
       let downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
-      // Ensure the URL path ends with the correct format extension so the browser downloads with correct type
       if (format && !downloadUrl.toLowerCase().endsWith('.' + format.toLowerCase())) {
-        // Append format extension to raw Cloudinary URL
         downloadUrl = downloadUrl + '.' + format.toLowerCase();
       }
       return downloadUrl;
@@ -1398,9 +1445,9 @@ function initDepositSystem() {
               <button class="btn-record-action btn-preview-vault" data-url="${doc.url}" data-title="${doc.title}" data-category="${doc.category}" data-size="${sizeStr}" data-format="${doc.format}" title="Preview Document">
                 👁️
               </button>
-              <a href="${downloadUrl}" class="btn-record-action btn-download-vault" download="${doc.title}.${doc.format}" title="Download Document">
+              <button class="btn-record-action btn-download-vault" data-url="${downloadUrl}" data-filename="${doc.title}.${doc.format}" title="Download Document">
                 📥
-              </a>
+              </button>
               <button class="btn-record-action btn-delete" data-id="${doc._id}" title="Delete Record">
                 🗑️
               </button>
@@ -1409,6 +1456,17 @@ function initDepositSystem() {
         </tr>
       `;
     }).join('');
+
+    // Wire up download button actions in table
+    const tableDownloadButtons = recordsTableBody.querySelectorAll('.btn-download-vault');
+    tableDownloadButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = btn.getAttribute('data-url');
+        const filename = btn.getAttribute('data-filename');
+        triggerDirectDownload(url, filename);
+      });
+    });
 
     // Wire up preview button actions
     const previewVaultButtons = recordsTableBody.querySelectorAll('.btn-preview-vault');
@@ -1439,31 +1497,30 @@ function initDepositSystem() {
         vaultModalDocSize.textContent = `${fileFormat.toUpperCase()} - ${fileSize}`;
 
         const downloadUrl = getDownloadUrl(fileUrl, fileTitle, fileFormat);
-        vaultModalDownloadBtn.setAttribute('href', downloadUrl);
-        vaultModalDownloadBtn.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        const filename = `${fileTitle}.${fileFormat}`;
+
         vaultModalDownloadBtn.textContent = downloadLabel;
-        vaultDocFallbackDownload.setAttribute('href', downloadUrl);
-        vaultDocFallbackDownload.setAttribute('download', `${fileTitle}.${fileFormat}`);
+        vaultModalDownloadBtn.onclick = (e) => {
+          e.preventDefault();
+          triggerDirectDownload(downloadUrl, filename);
+        };
+
         vaultDocFallbackDownload.textContent = downloadLabel;
+        vaultDocFallbackDownload.onclick = (e) => {
+          e.preventDefault();
+          triggerDirectDownload(downloadUrl, filename);
+        };
 
         if (fileUrl.startsWith('#mock-url')) {
           vaultDocFrame.style.display = 'none';
           vaultDocNoPreview.style.display = 'flex';
           const mockP = vaultDocNoPreview.querySelector('p');
           if (mockP) mockP.textContent = 'This is a mock database record. Previewing mock records is not supported. Please configure your Cloudinary credentials for live files.';
-        } else if (fileFormat === 'pdf' || fileFormat === 'txt') {
-          vaultDocFrame.style.display = 'block';
-          vaultDocNoPreview.style.display = 'none';
-          vaultDocFrame.setAttribute('src', fileUrl);
-        } else if (fileFormat === 'docx' || fileFormat === 'doc') {
-          vaultDocFrame.style.display = 'block';
-          vaultDocNoPreview.style.display = 'none';
-          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
         } else {
-          vaultDocFrame.style.display = 'none';
-          vaultDocNoPreview.style.display = 'flex';
-          const failP = vaultDocNoPreview.querySelector('p');
-          if (failP) failP.textContent = 'This file format cannot be previewed directly in-browser. Please download the document to view its full content.';
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          // Render all document types (PDF, DOCX, DOC, TXT) via Google Docs Viewer to avoid cross-origin iframe security blocks
+          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
         }
 
         vaultPreviewModal.classList.add('active');
@@ -1650,11 +1707,22 @@ function initDepositSystem() {
         </div>
         <div class="card-actions">
           <button class="btn-preview-vault btn-preview" data-url="${doc.url}" data-title="${doc.title}" data-category="${categoryLabel}" data-size="${sizeStr}" data-format="${doc.format}">Open Preview</button>
-          <a href="${downloadUrl}" class="btn-download" download="${doc.title}.${doc.format}">Download ${doc.format.toUpperCase()}</a>
+          <button class="btn-download" data-url="${downloadUrl}" data-filename="${doc.title}.${doc.format}">Download ${doc.format.toUpperCase()}</button>
         </div>
       `;
 
       archiveGrid.appendChild(card);
+    });
+
+    // Wire up card download buttons
+    const cardDownloadButtons = archiveGrid.querySelectorAll('.dynamic-vault-card .btn-download');
+    cardDownloadButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = btn.getAttribute('data-url');
+        const filename = btn.getAttribute('data-filename');
+        triggerDirectDownload(url, filename);
+      });
     });
 
     // Wire up the new dynamic card preview actions
@@ -1687,32 +1755,30 @@ function initDepositSystem() {
         vaultModalDocSize.textContent = `${fileFormat.toUpperCase()} - ${fileSize}`;
 
         const downloadUrl = getDownloadUrl(fileUrl, fileTitle, fileFormat);
-        vaultModalDownloadBtn.setAttribute('href', downloadUrl);
-        vaultModalDownloadBtn.setAttribute('download', `${fileTitle}.${fileFormat}`);
-        vaultModalDownloadBtn.textContent = downloadLabel;
-        vaultDocFallbackDownload.setAttribute('href', downloadUrl);
-        vaultDocFallbackDownload.setAttribute('download', `${fileTitle}.${fileFormat}`);
-        vaultDocFallbackDownload.textContent = downloadLabel;
+        const filename = `${fileTitle}.${fileFormat}`;
 
+        vaultModalDownloadBtn.textContent = downloadLabel;
+        vaultModalDownloadBtn.onclick = (ev) => {
+          ev.preventDefault();
+          triggerDirectDownload(downloadUrl, filename);
+        };
+
+        vaultDocFallbackDownload.textContent = downloadLabel;
+        vaultDocFallbackDownload.onclick = (ev) => {
+          ev.preventDefault();
+          triggerDirectDownload(downloadUrl, filename);
+        };
 
         if (fileUrl.startsWith('#mock-url')) {
           vaultDocFrame.style.display = 'none';
           vaultDocNoPreview.style.display = 'flex';
           const mockP = vaultDocNoPreview.querySelector('p');
           if (mockP) mockP.textContent = 'This is a mock database record. Previewing mock records is not supported. Please configure your Cloudinary credentials for live files.';
-        } else if (fileFormat === 'pdf' || fileFormat === 'txt') {
-          vaultDocFrame.style.display = 'block';
-          vaultDocNoPreview.style.display = 'none';
-          vaultDocFrame.setAttribute('src', fileUrl);
-        } else if (fileFormat === 'docx' || fileFormat === 'doc') {
-          vaultDocFrame.style.display = 'block';
-          vaultDocNoPreview.style.display = 'none';
-          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
         } else {
-          vaultDocFrame.style.display = 'none';
-          vaultDocNoPreview.style.display = 'flex';
-          const failP = vaultDocNoPreview.querySelector('p');
-          if (failP) failP.textContent = 'This file format cannot be previewed directly in-browser. Please download the document to view its full content.';
+          vaultDocFrame.style.display = 'block';
+          vaultDocNoPreview.style.display = 'none';
+          // Render all document formats (PDF, DOCX, DOC, TXT) via Google Docs Viewer to avoid cross-origin iframe blocks
+          vaultDocFrame.setAttribute('src', `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
         }
 
         vaultPreviewModal.classList.add('active');
